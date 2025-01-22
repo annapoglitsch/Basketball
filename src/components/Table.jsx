@@ -1,18 +1,74 @@
-import React, { useRef } from 'react'
-import { MeshTransmissionMaterial, useGLTF } from '@react-three/drei'
+import { React, useRef } from "react";
+import { MeshTransmissionMaterial, useGLTF } from "@react-three/drei";
+import { RigidBody, vec3 } from "@react-three/rapier";
 
 const Table = (props) => {
-  const { nodes, materials } = useGLTF('/models/table.gltf');
+  const { nodes, materials } = useGLTF("/models/table.gltf");
+  const controlA = useRef(null);
+  const controlB = useRef(null);
+  const thrusterA = useRef(null);
+  const thrusterB = useRef(null);
+
+  const clickUp = (controlRef) => {
+    if (controlRef.current) {
+      controlRef.current.position.y = 0.128;
+
+      if (controlRef === controlA) {
+        const position = vec3(thrusterA.current.translation());
+        thrusterA.current.setNextKinematicTranslation({
+          x: position.x,
+          y: position.y - 0.5,
+          z: position.z,
+        });
+      } else {
+        const position = vec3(thrusterB.current.translation());
+        thrusterB.current.setNextKinematicTranslation({
+          x: position.x,
+          y: position.y - 0.5,
+          z: position.z,
+        });
+      }
+    }
+  };
+
+  const clickDown = (controlRef) => {
+    if (controlRef.current) {
+      controlRef.current.position.y = 0.128 - 0.1;
+
+      if (controlRef === controlA) {
+        const position = vec3(thrusterA.current.translation());
+        thrusterA.current.setNextKinematicTranslation({
+          x: position.x,
+          y: position.y + 0.5,
+          z: position.z,
+        });
+      } else {
+        const position = vec3(thrusterB.current.translation());
+        thrusterB.current.setNextKinematicTranslation({
+          x: position.x,
+          y: position.y + 0.5,
+          z: position.z,
+        });
+      }
+    }
+  };
 
   return (
     <group {...props} dispose={null}>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Table.geometry}
-        material={materials.Wood}
-        position={[0, 0.068, 0]}
-      />
+      <RigidBody
+        type="fixed"
+        colliders="trimesh"
+        restitution={0.6}
+        friction={0}
+      >
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Table.geometry}
+          material={materials.Wood}
+          position={[0, 0.068, 0]}
+        />
+      </RigidBody>
       <mesh
         castShadow
         receiveShadow
@@ -21,11 +77,15 @@ const Table = (props) => {
         position={[4.135, 0.092, -0.003]}
       />
       <mesh
+        ref={controlA}
         castShadow
         receiveShadow
         geometry={nodes.Control_A.geometry}
         material={materials.Red}
-        position={[4.184, 0.129, 0.744]}>
+        position={[4.184, 0.129, 0.744]}
+        onPointerUp={() => clickUp(controlA)}
+        onPointerDown={() => clickDown(controlA)}
+      >
         <mesh
           castShadow
           receiveShadow
@@ -36,11 +96,15 @@ const Table = (props) => {
         />
       </mesh>
       <mesh
+        ref={controlB}
         castShadow
         receiveShadow
         geometry={nodes.Control_B.geometry}
         material={materials.Green}
-        position={[4.183, 0.128, -0.754]}>
+        position={[4.183, 0.128, -0.754]}
+        onPointerUp={() => clickUp(controlB)}
+        onPointerDown={() => clickDown(controlB)}
+      >
         <mesh
           castShadow
           receiveShadow
@@ -50,20 +114,36 @@ const Table = (props) => {
           rotation={[Math.PI / 2, 1.184, -Math.PI / 2]}
         />
       </mesh>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Thruster_B.geometry}
-        material={materials.Black}
-        position={[2.259, -0.189, -0.764]}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Thruster_A.geometry}
-        material={materials.Black}
-        position={[2.259, -0.189, 0.765]}
-      />
+      <RigidBody
+        ref={thrusterA}
+        type="kinematicPosition"
+        colliders="hull"
+        lockRotations={true}
+        enabledTranslations={[false, true, false]}
+      >
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Thruster_A.geometry}
+          material={materials.Black}
+          position={[2.259, -0.189, 0.765]}
+        />
+      </RigidBody>
+      <RigidBody
+        ref={thrusterB}
+        type="kinematicPosition"
+        colliders="hull"
+        lockRotations={true}
+        enabledTranslations={[false, true, false]}
+      >
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Thruster_B.geometry}
+          material={materials.Black}
+          position={[2.259, -0.189, -0.764]}
+        />
+      </RigidBody>
       <mesh
         castShadow
         receiveShadow
@@ -71,46 +151,60 @@ const Table = (props) => {
         material={materials.Black}
         position={[2.257, -0.047, 0]}
       />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Base.geometry}
-        material={materials.Wood}
-        position={[-2.235, 0.565, 0]}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Cylinder.geometry}
-        material={materials.Red}
-        position={[-2.235, 1.177, 0]}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Panel.geometry}
-        material={materials.Wood}
-        position={[-2.234, 1.814, 0]}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Ring.geometry}
-        material={materials.Red}
-        position={[-1.686, 1.46, 0]}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Glass.geometry}
-        position={[0.497, 1.54, 0.005]}
+      <RigidBody type="fixed" colliders="trimesh">
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Base.geometry}
+          material={materials.Wood}
+          position={[-2.235, 0.565, 0]}
+        />
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Cylinder.geometry}
+          material={materials.Red}
+          position={[-2.235, 1.177, 0]}
+        />
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Panel.geometry}
+          material={materials.Wood}
+          position={[-2.234, 1.814, 0]}
+        />
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Ring.geometry}
+          material={materials.Red}
+          position={[-1.686, 1.46, 0]}
+        />
+      </RigidBody>
+      <RigidBody
+        type="fixed"
+        colliders="trimesh"
+        restitution={0.2}
+        friction={0}
       >
-        <MeshTransmissionMaterial anisotropy={0.1} chromaticAberration={0.04} distortionScale={0} temporalDistortion={0} />
-      </mesh>
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Glass.geometry}
+          position={[0.497, 1.54, 0.005]}
+        >
+          <MeshTransmissionMaterial
+            anisotropy={0.1}
+            chromaticAberration={0.04}
+            distortionScale={0}
+            temporalDistortion={0}
+          />
+        </mesh>
+      </RigidBody>
     </group>
-  )
-}
+  );
+};
 
-useGLTF.preload('/models/table.gltf');
+useGLTF.preload("/models/table.gltf");
 
 export default Table;
