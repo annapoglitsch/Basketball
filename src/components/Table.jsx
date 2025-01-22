@@ -1,6 +1,7 @@
-import { React, useRef } from "react";
+import { React, useRef, useState } from "react";
 import { MeshTransmissionMaterial, useGLTF } from "@react-three/drei";
-import { RigidBody, vec3 } from "@react-three/rapier";
+import { RigidBody, vec3, CuboidCollider } from "@react-three/rapier";
+import useGame from "../stores/useGame";
 
 const Table = (props) => {
   const { nodes, materials } = useGLTF("/models/table.gltf");
@@ -8,6 +9,7 @@ const Table = (props) => {
   const controlB = useRef(null);
   const thrusterA = useRef(null);
   const thrusterB = useRef(null);
+
 
   const clickUp = (controlRef) => {
     if (controlRef.current) {
@@ -53,6 +55,15 @@ const Table = (props) => {
     }
   };
 
+  const [isScored, setIsScored] = useState(false)
+  const increaseScore = useGame((state) => state.increment)
+  const goal = () => {
+    if (!isScored) {
+      setIsScored(true)
+      increaseScore()
+    }
+  }
+
   return (
     <group {...props} dispose={null}>
       <RigidBody
@@ -67,6 +78,15 @@ const Table = (props) => {
           geometry={nodes.Table.geometry}
           material={materials.Wood}
           position={[0, 0.068, 0]}
+        />
+
+        <CuboidCollider
+          args={[0, 2, 1.5]}
+          position={[1.5, 1.5, 0]}
+          sensor
+          onIntersectionExit={() => {
+            setIsScored(false)
+          }}
         />
       </RigidBody>
       <mesh
@@ -201,6 +221,19 @@ const Table = (props) => {
           />
         </mesh>
       </RigidBody>
+      <CuboidCollider
+        args={[0.35, 0, 0.35]}
+        position={[-1.686, 1.40, 0]}
+        sensor
+      >
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Ring.geometry}
+          material={materials.Red}
+          position={[0, 0.06, 0]}
+        />
+      </CuboidCollider>
     </group>
   );
 };
